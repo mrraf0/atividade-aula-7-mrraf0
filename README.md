@@ -1,4 +1,4 @@
-🧭 GUIA DO ALUNO — ATIVIDADE PRÁTICA (AULA 07)
+ GUIA DO ALUNO — ATIVIDADE PRÁTICA (AULA 07)
 
 Tema: Segurança de Software • SAST • DAST • DevSecOps
 Objetivo: Detectar vulnerabilidades reais usando ferramentas automáticas.
@@ -28,27 +28,6 @@ Permissão para criar repositórios
 GitHub Actions habilitado
 
 Editor de código (VSCode recomendado)
-
-📁 3. Criar o repositório no GitHub
-
-Acesse: https://github.com/new
-
-Nomeie o repositório como:
-
-atividade-sast-devsecops
-
-
-Escolha: Public (recomendado)
-
-Marque: Add a README
-
-Clique Create Repository
-
-📄 4. Criar o arquivo com código vulnerável
-
-Você vai criar o arquivo:
-
-VulnerableCode.java
 
 
 No GitHub, clique em Add file > Create new file
