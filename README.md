@@ -1,186 +1,142 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+🧭 GUIA DO ALUNO — ATIVIDADE PRÁTICA (AULA 07)
 
-/**
- * ATENÇÃO: 
- * ==========================================================
- * ESTE CÓDIGO É INTENCIONALMENTE VULNERÁVEL.
- * 
- * Ele foi criado APENAS para fins educacionais, para que
- * ferramentas de SAST (CodeQL, Codacy, etc.) e de DAST 
- * possam identificar problemas de segurança.
- * 
- * NÃO UTILIZAR NENHUMA DESTAS PRÁTICAS EM CÓDIGO REAL.
- * ==========================================================
- */
-public class VulnerableCode {
+Tema: Segurança de Software • SAST • DAST • DevSecOps
+Objetivo: Detectar vulnerabilidades reais usando ferramentas automáticas.
 
-    // 1) CREDENCIAIS EM CÓDIGO (HARD-CODED CREDENTIALS)
-    // Problema: usuário, senha e URL do banco estão expostos no código-fonte.
-    // Ferramentas de SAST e de secret scanning costumam apontar isso.
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/minha_aplicacao";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "senha_super_secreta";
+🎯 1. Objetivo da Atividade
 
-    /**
-     * Simula um processo de login extremamente inseguro.
-     *
-     * Vulnerabilidades principais:
-     * - SQL Injection (concatenação direta de parâmetros na query).
-     * - Exposição de credenciais no código.
-     * - Uso de Statement em vez de PreparedStatement.
-     */
-    public boolean loginInseguro(String username, String password) {
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet rs = null;
+Nesta atividade você vai:
 
-        try {
-            // 2) CONEXÃO DIRETA COM CREDENCIAIS HARDCODED
-            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+Criar um repositório no GitHub
 
-            // 3) SQL INJECTION
-            // Problema: username e password entram diretamente na query
-            // sem validação ou parametrização.
-            String sql = "SELECT * FROM usuarios WHERE username = '" + username
-                       + "' AND password = '" + password + "'";
+Subir um código intencionalmente vulnerável
 
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(sql);
+Ativar CodeQL (SAST) no GitHub
 
-            return rs.next(); // se encontrou algum registro, considera login válido
+Executar a pipeline
 
-        } catch (Exception e) {
-            // 4) TRATAMENTO GENÉRICO DE EXCEÇÃO + PRINT DE STACKTRACE
-            // Problema: captura Exception genérica e exibe stack trace,
-            // o que pode vazar informações sensíveis em logs.
-            e.printStackTrace();
-            return false;
+Analisar os alertas de segurança gerados
 
-        } finally {
-            try {
-                if (rs != null) rs.close();
-                if (stmt != null) stmt.close();
-                if (conn != null) conn.close();
-            } catch (Exception ignored) {
-                // Ignorando exceção de fechamento (também é má prática)
-            }
-        }
-    }
+O objetivo é entender como as ferramentas encontram vulnerabilidades automaticamente e como isso se aplica ao dia a dia DevSecOps.
 
-    /**
-     * Simula uma busca de usuários por termo de pesquisa.
-     *
-     * Vulnerabilidade: SQL Injection pela concatenação da string "searchTerm".
-     */
-    public void buscarUsuarioPorTermo(String searchTerm) {
-        Connection conn = null;
-        Statement stmt = null;
+🧩 2. Pré-requisitos
 
-        try {
-            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+Conta no GitHub ativa
 
-            // 5) SQL INJECTION EM CONSULTA DE BUSCA
-            String sql = "SELECT * FROM usuarios WHERE nome LIKE '%" + searchTerm + "%'";
-            stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+Permissão para criar repositórios
 
-            while (rs.next()) {
-                System.out.println("Usuário encontrado: " + rs.getString("nome"));
-            }
+GitHub Actions habilitado
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (stmt != null) stmt.close();
-                if (conn != null) conn.close();
-            } catch (Exception ignored) {
-            }
-        }
-    }
+Editor de código (VSCode recomendado)
 
-    /**
-     * Exemplo de armazenamento de senha com algoritmo fraco.
-     *
-     * Vulnerabilidade:
-     * - Uso de MD5 sem salt, considerado inseguro.
-     */
-    public String armazenarSenhaInsegura(String senhaPlano) {
-        try {
-            // 6) USO DE ALGORITMO CRIPTOGRÁFICO FRACO (MD5)
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hashBytes = md.digest(senhaPlano.getBytes());
+📁 3. Criar o repositório no GitHub
 
-            // Converte o array de bytes em string hexadecimal (apenas para exibir)
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
+Acesse: https://github.com/new
 
-            String hashInseguro = sb.toString();
-            // Em um cenário real, esse hash não deveria ser gerado com MD5
-            // e nem sem "salt".
-            System.out.println("Senha armazenada (hash inseguro MD5): " + hashInseguro);
-            return hashInseguro;
+Nomeie o repositório como:
 
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+atividade-sast-devsecops
 
-    /**
-     * Simula geração de HTML sem sanitização de entrada.
-     *
-     * Vulnerabilidade:
-     * - XSS (Cross-Site Scripting), pois o valor de "nome" é injetado
-     *   diretamente na página sem escapar caracteres.
-     */
-    public String gerarPaginaPerfil(String nome) {
-        // 7) XSS – entrada do usuário é colocada diretamente no HTML
-        String html =
-                "<html>" +
-                "<head><title>Perfil do Usuário</title></head>" +
-                "<body>" +
-                "<h1>Bem-vindo, " + nome + "!</h1>" +
-                "<p>Esse é o seu painel.</p>" +
-                "</body>" +
-                "</html>";
 
-        return html;
-    }
+Escolha: Public (recomendado)
 
-    /**
-     * Método main apenas para permitir execução simples da classe
-     * e facilitar testes básicos.
-     *
-     * Em um cenário real, essas funcionalidades estariam dentro de um
-     * serviço web / controlador HTTP, que seria o alvo de DAST.
-     */
-    public static void main(String[] args) {
-        VulnerableCode app = new VulnerableCode();
+Marque: Add a README
 
-        // Exemplo de login inseguro
-        System.out.println("Tentando login inseguro...");
-        boolean autenticado = app.loginInseguro("admin", "admin123");
-        System.out.println("Login realizado? " + autenticado);
+Clique Create Repository
 
-        // Exemplo de busca insegura
-        System.out.println("\nBuscando usuários com termo inseguro...");
-        app.buscarUsuarioPorTermo("teste' OR '1'='1");
+📄 4. Criar o arquivo com código vulnerável
 
-        // Exemplo de armazenamento de senha inseguro
-        System.out.println("\nArmazenando senha com MD5 (inseguro)...");
-        app.armazenarSenhaInsegura("minha_senha_fraca");
+Você vai criar o arquivo:
 
-        // Exemplo de XSS
-        System.out.println("\nGerando HTML de perfil (possível XSS)...");
-        String pagina = app.gerarPaginaPerfil("<script>alert('XSS');</script>");
-        System.out.println(pagina);
-    }
-}
+VulnerableCode.java
+
+
+No GitHub, clique em Add file > Create new file
+
+Nome do arquivo: VulnerableCode.java
+
+Cole o código disponibilizado pelo professor (já vulnerável e comentado)
+
+Clique em Commit changes
+
+🧪 5. Habilitar o CodeQL (SAST) no repositório
+
+Vá até:
+GitHub → Actions
+
+Procure por:
+CodeQL — Analyze ou Security → Code scanning → Set up CodeQL
+
+Clique em:
+Configure
+
+O GitHub vai abrir um arquivo .yml de workflow pronto
+
+Clique em Commit changes
+
+📌 Isso ativa o CodeQL para rodar automaticamente.
+
+🚀 6. Executar o workflow
+
+Vá até Actions
+
+Clique em CodeQL
+
+Você verá a pipeline rodando
+
+Aguarde até finalizar (leva 1–3 minutos)
+
+Se aparecer um ✔ verde = workflow executado
+Se aparecer alertas = ótimo! É isso que queremos analisar.
+
+🔍 7. Verificar vulnerabilidades encontradas
+
+Após a conclusão:
+
+Vá até Security → Code scanning alerts
+
+Você verá uma lista de vulnerabilidades detectadas
+
+Exemplos esperados:
+
+SQL Injection
+
+XSS
+
+Credenciais em código (Secrets)
+
+Uso de MD5 (algoritmo fraco)
+
+Tratamento genérico de exceção
+
+Uso de Statement sem parametrização
+
+Possível vazamento de informação em logs
+
+💡 O aluno deve ler cada alerta e entender o motivo.
+
+✍️ 8. Entrega da Atividade
+
+Você deve entregar:
+
+Link para o repositório
+
+Print da tela de Code Scanning Alerts
+
+Print da pipeline executada (Actions)
+
+Um pequeno comentário respondendo:
+
+Quais vulnerabilidades foram detectadas?
+
+Qual delas é mais crítica e por quê?
+
+Como você corrigiria pelo menos uma delas?
+
+💡 9. Dicas úteis
+
+Se o CodeQL não mostrar nada, verifique se o workflow rodou.
+
+Alterar um pouco o código e fazer novo commit força nova análise.
+
+O objetivo não é corrigir tudo — é identificar, como em um processo real DevSecOps.
