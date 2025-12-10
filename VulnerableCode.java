@@ -1,96 +1,51 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.io.*;
+import java.sql.*;
 import java.security.MessageDigest;
 
-/**
- * ==========================================================
- *  CÓDIGO INTENCIONALMENTE VULNERÁVEL — SOMENTE PARA TESTES
- * ==========================================================
- *
- * Contém:
- *  - Credenciais Hardcoded
- *  - SQL Injection
- *  - MD5 inseguro
- *  - Possível XSS
- *  - Exposição de stacktrace
- *  - Comentários contendo dados sensíveis (má prática)
- *
- * NÃO USE EM PRODUÇÃO. APENAS PARA TREINOS/SAST.
- */
-public class VulnerableExample {
+public class VulnerableDemo {
 
-    // ============================
-    // CREDENCIAIS HARDCODED
-    // ============================
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/app_teste";
+    // ======================
+    // HARD-CODED CREDENTIALS
+    // ======================
     private static final String DB_USER = "admin";
-    private static final String DB_PASSWORD = "senha_muito_insegura_123";
+    private static final String DB_PASSWORD = "123456";  // SECRET HARDCODED
 
-    // Token fictício exposto no código (má prática)
-    private static final String API_KEY = "sk_live_9999999_token_exposto_inseguro";
+    // API Key fake em formato real → secret scanners detectam
+    private static final String API_KEY = "sk_live_1234567890abcdefghijklmnopqrstuvwxyz";
 
-    /**
-     * SQL Injection clássico
-     * - Concatena valores diretamente
-     * - Não usa PreparedStatement
-     */
-    public boolean loginInseguro(String usuario, String senha) {
+    // ======================
+    // SQL INJECTION
+    // ======================
+    public boolean login(String user, String pass) {
         try {
-            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/app", DB_USER, DB_PASSWORD);
 
-            // SQL Injection proposital
-            String sql = "SELECT * FROM usuarios WHERE username = '" + usuario +
-                         "' AND password = '" + senha + "'";
+            // SQL INJECTION DETECTÁVEL
+            String sql = "SELECT * FROM users WHERE username = '" + user + "' AND password = '" + pass + "'";
 
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+            Statement st = conn.createStatement();
+            ResultSet rs = st.executeQuery(sql);
 
             return rs.next();
 
         } catch (Exception e) {
-            System.out.println("Erro no login:");
-            e.printStackTrace(); // inseguro
+            e.printStackTrace();
             return false;
         }
     }
 
-    /**
-     * SQL Injection usando LIKE
-     */
-    public void buscarUsuario(String termo) {
+    // ======================
+    // HASH MD5 INSEGURO
+    // ======================
+    public String hashSenha(String senha) {
         try {
-            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-
-            String sql = "SELECT * FROM usuarios WHERE nome LIKE '%" + termo + "%'";
-
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-
-            while (rs.next()) {
-                System.out.println("Encontrado: " + rs.getString("nome"));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace(); // inseguro
-        }
-    }
-
-    /**
-     * Uso de MD5 sem salt — extremamente inseguro
-     */
-    public String gerarHashMD5(String senha) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] bytes = md.digest(senha.getBytes());
+            MessageDigest md = MessageDigest.getInstance("MD5"); // INSEGURO
+            byte[] hash = md.digest(senha.getBytes());
 
             StringBuilder sb = new StringBuilder();
-            for (byte b : bytes) sb.append(String.format("%02x", b));
+            for (byte b : hash) sb.append(String.format("%02x", b));
 
-            String hash = sb.toString();
-            System.out.println("MD5 inseguro gerado: " + hash);
-            return hash;
+            return sb.toString();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,47 +53,36 @@ public class VulnerableExample {
         }
     }
 
-    /**
-     * Possível XSS
-     * - Entrada do usuário vai direto para HTML
-     */
-    public String gerarHtmlInseguro(String nome) {
-        return "<html>" +
-               "<body>" +
-               "<h1>Bem-vindo, " + nome + "!</h1>" + // vulnerável
-               "</body>" +
-               "</html>";
+    // ======================
+    // XSS CLÁSSICO
+    // ======================
+    public String pagina(String nome) {
+        return "<html><body><h1>Olá " + nome + "</h1></body></html>"; // sem sanitização
     }
 
-    /**
-     * Tratamento inseguro de exceções com vazamento de detalhes
-     */
-    public void operacaoCritica() {
+    // ======================
+    // DESERIALIZAÇÃO INSEGURA
+    // ======================
+    public Object desserializar(byte[] dados) {
         try {
-            String x = null;
-            x.length(); // NPE proposital
+            // Código padrão que ferramentas detectam como "insecure deserialization"
+            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(dados));
+            return ois.readObject();
+
         } catch (Exception e) {
-            System.out.println("Erro crítico ocorrido:");
-            e.printStackTrace(); // vazamento de detalhes sensíveis
+            e.printStackTrace();
+            return null;
         }
     }
 
-    public static void main(String[] args) {
-        VulnerableExample app = new VulnerableExample();
-
-        System.out.println("\n--- Testando Login Inseguro (SQL Injection) ---");
-        app.loginInseguro("admin", "123' OR '1'='1");
-
-        System.out.println("\n--- Testando Busca Insegura ---");
-        app.buscarUsuario("teste%' OR '1'='1");
-
-        System.out.println("\n--- Testando MD5 inseguro ---");
-        app.gerarHashMD5("senha123");
-
-        System.out.println("\n--- Testando XSS ---");
-        System.out.println(app.gerarHtmlInseguro("<script>alert('XSS');</script>"));
-
-        System.out.println("\n--- Testando Operação Crítica ---");
-        app.operacaoCritica();
+    // ======================
+    // RCE DETECTÁVEL
+    // ======================
+    public void executar(String cmd) {
+        try {
+            Runtime.getRuntime().exec(cmd); // muitas ferramentas marcam como crítico
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
